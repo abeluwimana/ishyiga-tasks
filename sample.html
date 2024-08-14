@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List with Cart and Favorites</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+           
+        }
+
+        .list-container,
+        .cart-container {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        .list-container h2,
+        .cart-container h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .category-list,
+        .subcategory-list,
+        .items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .category-list,
+        .subcategory-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .items-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .category-list li,
+        .subcategory-list li,
+        .items-list .product-card {
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .category-list li:hover,
+        .subcategory-list li:hover,
+        .items-list .product-card:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .category-list li.selected {
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        .category-list li {
+            color: #007BFF;
+        }
+
+        .subcategory-list li {
+            color: #28A745;
+        }
+
+        .product-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .product-card .product-info {
+            margin-top: 10px;
+        }
+
+        .product-card .product-info h3 {
+            margin: 10px 0 5px;
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .product-card .product-info p {
+            margin: 5px 0;
+            color: #888;
+            font-size: 0.95em;
+        }
+
+        .product-card .product-actions {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .product-card .product-actions button {
+            padding: 6px 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+
+        .product-card .product-actions button:hover {
+            background-color: #0056b3;
+        }
+
+        .product-card .product-actions .favorite-btn {
+            background-color: #FF4136;
+        }
+
+        .product-card .product-actions .favorite-btn:hover {
+            background-color: #c8102e;
+        }
+
+        .cart-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cart-container li {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-container li img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            border-radius: 8px;
+        }
+
+        .cart-container li .item-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-container li .item-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .cart-container li .item-controls button {
+            background-color: #FF4136;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .cart-container li .item-controls button:hover {
+            background-color: #c8102e;
+        }
+
+        .cart-container li .item-controls .quantity-btn {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+
+        .cart-container li .item-controls .quantity-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .cart-container li .item-controls span {
+            margin: 0 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .cart-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-container button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .list-container {
+                margin-bottom: 20px;
+            }
+
+            .items-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .items-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Product List with Cart and Favorites</h1>
+    <div class="container">
+        <div class="list-container">
+            <div>
+                <h2>Categories</h2>
+                <ul id="categoryList" class="category-list"></ul>
+            </div>
+            <div>
+                <h2>Subcategories</h2>
+                <ul id="subcategoryList" class="subcategory-list"></ul>
+            </div>
+            <div>
+                <h2>Items</h2>
+                <ul id="itemsList" class="items-list"></ul>
+            </div>
+        </div>
+        <div class="cart-container">
+            <h2>Cart</h2>
+            <ul id="cartList"></ul>
+            <button id="checkoutButton">Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        const categories = [
+            { id: 1, name: 'Electronics' },
+            { id: 2, name: 'Furniture' },
+            { id: 3, name: 'Clothing' }
+        ];
+
+        const subcategories = [
+            { id: 1, name: 'Mobile Phones', categoryId: 1 },
+            { id: 2, name: 'Laptops', categoryId: 1 },
+            { id: 3, name: 'TVs', categoryId: 1 },
+            { id: 4, name: 'Sofas', categoryId: 2 },
+            { id: 5, name: 'Beds', categoryId: 2 },
+            { id: 6, name: 'Chairs', categoryId: 2 },
+            { id: 7, name: 'Men\'s Clothing', categoryId: 3 },
+            { id: 8, name: 'Women\'s Clothing', categoryId: 3 },
+            { id: 9, name: 'Children\'s Clothing', categoryId: 3 }
+        ];
+
+        const items = [
+            { id: 1, name: 'iPhone 12', price: '$799', subcategoryId: 1, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 2, name: 'Samsung Galaxy S21', price: '$999', subcategoryId: 1, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 3, name: 'MacBook Pro', price: '$1299', subcategoryId: 2, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 4, name: 'Dell XPS 13', price: '$1199', subcategoryId: 2, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 5, name: 'Sony Bravia 55"', price: '$699', subcategoryId: 3, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 6, name: 'LG OLED 65"', price: '$1499', subcategoryId: 3, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 7, name: 'Leather Sofa', price: '$899', subcategoryId: 4, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 8, name: 'Queen Bed', price: '$499', subcategoryId: 5, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 9, name: 'Gaming Chair', price: '$199', subcategoryId: 6, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 10, name: 'Men\'s T-Shirt', price: '$29', subcategoryId: 7, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 11, name: 'Women\'s Dress', price: '$49', subcategoryId: 8, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
+            { id: 12, name: 'Children\'s Jacket', price: '$39', subcategoryId: 9, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' }
+        ];
+
+        let cart = [];
+
+        function populateList(elementId, data, clickHandler) {
+            const listElement = document.getElementById(elementId);
+            listElement.innerHTML = '';
+            data.forEach(item => {
+                const listItem = document.createElement('li');
+                if (elementId === 'categoryList' || elementId === 'subcategoryList') {
+                    // For category and subcategory lists, only display names
+                    listItem.textContent = item.name;
+                } else {
+                    // For items list, include images and additional details in card format
+                    listItem.innerHTML = `
+                        <div class="product-card">
+                            <img src="${item.imageUrl}" alt="${item.name}">
+                            <div class="product-info">
+                                <h3>${item.name}</h3>
+                                <p>${item.price}</p>
+                            </div>
+                            <div class="product-actions">
+                                <button class="favorite-btn" onclick="addToFavorites(${item.id})">favorite</button>
+                                <button onclick="addItemToCart(${item.id})">cart</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                listItem.onclick = () => clickHandler(item.id);
+                listElement.appendChild(listItem);
+            });
+        }
+
+        function filterItemsByCategory(categoryId) {
+            const filteredSubcategories = subcategories.filter(sub => sub.categoryId === categoryId);
+            const filteredItems = items.filter(item => filteredSubcategories.find(sub => sub.id === item.subcategoryId));
+            populateList('subcategoryList', filteredSubcategories, onSubcategoryClick);
+            populateList('itemsList', filteredItems, addItemToCart);
+        }
+
+        function filterItemsBySubcategory(subcategoryId) {
+            const filteredItems = items.filter(item => item.subcategoryId === subcategoryId);
+            populateList('itemsList', filteredItems, addItemToCart);
+        }
+
+        function onCategoryClick(categoryId) {
+            filterItemsByCategory(categoryId);
+        }
+
+        function onSubcategoryClick(subcategoryId) {
+            filterItemsBySubcategory(subcategoryId);
+        }
+
+        function addItemToCart(itemId) {
+            const item = items.find(i => i.id === itemId);
+            const cartItem = cart.find(cartItem => cartItem.id === itemId);
+            if (cartItem) {
+                cartItem.quantity++;
+            } else {
+                cart.push({ ...item, quantity: 1 });
+            }
+            populateCart();
+        }
+
+        function removeItemFromCart(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
+            populateCart();
+        }
+
+        function increaseQuantity(itemId) {
+            const cartItem = cart.find(item => item.id === itemId);
+            if (cartItem) {
+                cartItem.quantity++;
+                populateCart();
+            }
+        }
+
+        function decreaseQuantity(itemId) {
+            const cartItem = cart.find(item => item.id === itemId);
+            if (cartItem && cartItem.quantity > 1) {
+                cartItem.quantity--;
+            } else {
+                removeItemFromCart(itemId);
+            }
+            populateCart();
+        }
+
+        function addToFavorites(itemId) {
+            alert(`Item ${itemId} added to favorites!`);
+        }
+
+        function populateCart() {
+            const cartList = document.getElementById('cartList');
+            cartList.innerHTML = '';
+
+            cart.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <img src="${item.imageUrl}" alt="${item.name}">
+                    <div class="item-info">
+                        <strong>${item.name}</strong>
+                    </div>
+                    <div class="item-controls">
+                        <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
+                        <button onclick="removeItemFromCart(${item.id})">Remove</button>
+                    </div>
+                `;
+                cartList.appendChild(listItem);
+            });
+        }
+
+        function init() {
+            populateList('categoryList', categories, onCategoryClick);
+            populateList('subcategoryList', subcategories, onSubcategoryClick);
+            populateList('itemsList', items, addItemToCart);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,562 @@
+<!-- <%@ page import="Kaos.DbHandler" %>
+<%@ page import="Kaos.Lot" %>
+<%@ page import="Kaos.Structures.Product" %>
+<%@ page import="java.sql.Statement"%>
+<%@ page import="Kaos.Structures.Niki_Famille"%>
+<%@ page import="Kaos.Structures.Cart_hero"%>
+<%@ page import="Kaos.Structures.Rating_Info"%>
+<%@ page import="Kaos.Order"%>
+<%@ page import="Kaos.Structures.Cart_featured_control"%>
+<%@ page import="java.util.LinkedList" %>
+<%@ page import="java.util.Iterator" %> -->
+<!-- <%@ page import="Kaos.CartProcessing" %>
+<%@ page import="Kaos.MySQLConnector" %> -->
+<!-- <%@ page import="ecommerce.EETransaction" %>
+<%@ page import="ecommerce.EETransactionList" %> -->
+<%@ page import="java.sql.SQLException" %>
+<%@ page import="java.io.IOException" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="java.util.HashSet" %>
+
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Kaos</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f8f9fa;
+            }
+            .navbar {
+                background-color: #f8f9fa;
+                border-bottom: 1px solid #dee2e6;
+                padding: 10px 15px;
+            }
+            .nav-tabs {
+                border-bottom: none;
+                margin-left: -1170px !important;
+            }
+            .nav-tabs .nav-link {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                color: #007bff;
+                padding: 5px 10px;
+            }
+            .nav-tabs .nav-link.active {
+                background-color: #007bff;
+                color: white;
+            }
+            .category-card {
+                margin-bottom: 15px;
+                padding: 0 5px;
+            }
+            .card {
+                background-color: #e9ecef;
+                border: 1px solid #dee2e6;
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+            }
+            .card-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .card-text {
+                font-size: 14px;
+                color: #6c757d;
+            }
+            .btn-group-custom {
+                margin-bottom: 10px;
+            }
+            .table-responsive {
+                margin-top: 20px;
+            }
+            .table th,
+            .table td {
+                padding: 8px;
+                text-align: left;
+            }
+            .total-row {
+                font-weight: bold;
+            }
+            .container {
+                max-width: 100%;
+            }
+            .content-wrapper {
+                display: flex;
+                justify-content: space-between;
+            }
+            .category-section,
+            .table-section {
+                flex: 1;
+                padding: 10px;
+            }
+            .category-section {
+                margin-right: 10px;
+            }
+            @media (max-width: 768px) {
+                .content-wrapper {
+                    flex-direction: column;
+                }
+                .category-section,
+                .table-section {
+                    margin-right: 0;
+                    margin-bottom: 20px;
+                }
+            }
+            @media (max-width: 768px) {
+                .nav-tabs {
+                    border-bottom: none;
+                    margin-left: 0 !important;
+                }
+            }
+            @media (max-width: 1024px) and (min-width: 768px) {
+                .nav-tabs {
+                    border-bottom: none;
+                    margin-left: -230px !important;
+                }
+            }
+            .modal {
+                display: none; /* Hidden by default */
+                position: fixed;
+                z-index: 1;
+                padding-top: 100px;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgb(0,0,0);
+                background-color: rgba(0,0,0,0.4);
+            }
+            .modal-content {
+                background-color: #fefefe;
+                margin: auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+            }
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <%  
+    MySQLConnector.laDB = new DbHandler();  
+    %>
+    <body>
+        <div class="container-fluid">
+            <!-- Navbar and Buttons -->
+            <div class="navbar d-flex justify-content-between align-items-center">
+                <div class="btn-group-custom">
+                    <button class="btn btn-outline-primary btn-sm">Print Bill</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="goBack()">Back</button>
+                    <button class="btn btn-outline-success btn-sm">Search Item</button>
+                </div>
+            </div>
+            <!-- Tabs Navigation -->
+            <% 
+                   LinkedList<Cart_featured_control> cartFeaturedControls=null;
+                   if (MySQLConnector.laDB != null && MySQLConnector.laDB.mySQLConnect != null && MySQLConnector.laDB.mySQLConnect.stateMysql != null) {
+        cartFeaturedControls = MySQLConnector.laDB.getCart_featured_control(MySQLConnector.laDB.mySQLConnect.stateMysql);
+    } else {
+        // Handle the case where mySQLConnect is null
+        System.out.println("MySQLConnector.laDB or MySQLConnector.laDB.mySQLConnect is null");
+    }
+//                LinkedList<Cart_featured_control> cartFeaturedControls = MySQLConnector.laDB.getCart_featured_control(MySQLConnector.laDB.mySQLConnect.stateMysql);
+                if (MySQLConnector.laDB != null && MySQLConnector.laDB.mySQLConnect == null) {
+                    System.out.println("MySQLConnector.laDB.mySQLConnect IS NULL");
+                } else if (MySQLConnector.laDB.mySQLConnect != null && MySQLConnector.laDB.mySQLConnect.stateMysql == null) {
+                    System.out.println("MySQLConnector.laDB.mySQLConnect.stateMysql IS NULL /" + MySQLConnector.laDB.mySQLConnect.resultt);
+                } else {
+            %>
+            <ul class="nav nav-tabs mt-3 d-flex justify-content-center">
+                <% 
+                    int i = 0;
+                    for (Cart_featured_control featuredControl : cartFeaturedControls) {
+                        if (featuredControl.controlsName != null && !featuredControl.controlsName.toLowerCase().contains("drugs")) {
+                            i++;
+                %>
+                <li class="nav-item">
+                    <a class="nav-link <%= (i == 1) ? "active" : "" %>" href="#"> <%= featuredControl.controlsName %></a>
+                </li>
+                <% 
+                        }
+                    } 
+                %>
+            </ul>
+            <% } %>
+
+            <!-- Content Section -->
+            <div class="content-wrapper" >
+                <div class="category-section" id="card-container" style=" height: 800px; overflow-y: auto;">
+                    <!-- Category Cards -->
+                    <div class="row mt-4" >
+                        <% 
+          LinkedList<Product> elements = MySQLConnector.laDB.getProduct_TebukaKaos();
+          int homeSize = 40;
+          Set<String> displayedFamilies = new HashSet<>();
+
+          // Sort the elements by famille
+          elements.sort((p1, p2) -> p1.famille.compareToIgnoreCase(p2.famille));
+
+          for (Product element : elements) {
+              if (element.qty_frm_seller == 0.0) {
+                  continue;
+              }
+              if (displayedFamilies.contains(element.famille)) {
+                  continue;
+              }
+              displayedFamilies.add(element.famille);
+        
+              homeSize--;
+              int formattedQty = (int) element.qty_frm_seller;
+                        %>
+                        <div class="col-6 col-sm-6 col-md-4 category-card">
+                            <div class="card text-center" onclick="showProducts('<%= element.famille %>')">
+                                <div class="card-body">
+                                    <h5 class="card-title"><%= element.famille %></h5>
+                                    <p class="card-text"><%= formattedQty %> articles</p>
+                                </div>
+                            </div>
+                        </div>
+                        <% 
+//                            if (homeSize == 0) {
+//                                break;
+//                            }
+                        } 
+                        %>
+
+                    </div>
+                </div>
+
+                <div class="category-section" id="products-container" style="display: none;">
+                    <!--                    <div class="row mt-4">
+                                             Hardcoded Product Cards 
+                                            <div class="col-6 col-sm-6 col-md-4 category-card">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">Product 1</h5>
+                                                        <p class="card-text">Description of product 1</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-sm-6 col-md-4 category-card">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">Product 2</h5>
+                                                        <p class="card-text">Description of product 2</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-sm-6 col-md-4 category-card">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">Product 3</h5>
+                                                        <p class="card-text">Description of product 3</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>-->
+                </div>
+
+                <!-- Items and Totals Section -->
+                <div class="table-section">
+                    <div class="table-responsive">
+                        <%
+                            String ishyigaAccount="TABLE 44";
+                            LinkedList<Lot> cartItems = MySQLConnector.laDB.getMyCart(ishyigaAccount);
+                              
+                        %>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Items</th>
+                                    <th>U.P</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <%
+                                    double grandTotal = 0.0;
+                                    int index = 1;
+
+                                    for (Lot lot : cartItems) {
+                                        double totalPrice = lot.sellPrice * lot.qtyLive;
+                                        grandTotal += totalPrice;
+                                %>
+                                <tr>
+                                    <td><%= index++ %></td>
+                                    <td><%= lot.proname %></td>
+                                    <td><%= lot.sellPrice %></td>
+                                    <td><%= lot.qtyLive %></td>
+                                    <td><%= totalPrice %></td>
+                                </tr>
+                                <% } %>
+                                <tr class="total-row">
+                                    <td colspan="4" class="text-right">Total:</td>
+                                    <td><%= grandTotal %></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!-- Order Now Button -->
+                        <div class="text-right mt-3">
+                            <form action="" method="post">
+                                <!-- Pass necessary parameters if required -->
+                                <input type="hidden" name="ishyigaAccount" value="<%= ishyigaAccount %>">
+                                <button type="submit" class="btn btn-primary">Order Now</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="quantityModal" class="modal" style="width:50%">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Add to Cart</h2>
+                <p><strong>Price:</strong> <span id="modalSellPrice"></span></p>
+                <p><strong>Niki Code:</strong> <span id="modalNikiCode"></span></p>
+                <p><strong>Seller Account:</strong> <span id="modalSellerAccount"></span></p>
+                <label for="modalQuantity"><strong>Quantity:</strong></label>
+                <input type="number" id="modalQuantity" name="modalQuantity" min="1" max="100" value="1">
+                <button id="confirmAddToCart">Add to Cart</button>
+            </div>
+        </div>
+        <!-- Bootstrap JS and dependencies -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+        <script>
+                                function showProducts(famille) {
+                                    console.log("hello world");
+                                    const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf('/', 1));
+                                    fetch(contextPath + "/GetProductsByFamille?famille=" + encodeURIComponent(famille))
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                // Clear existing products
+                                                const productsContainer = document.getElementById('products-container');
+                                                productsContainer.innerHTML = ''; // Clear previous content
+
+                                                if (data.length > 0) {
+                                                    const row = document.createElement('div');
+                                                    row.className = 'row mt-4';
+
+                                                    data.forEach(product => {
+                                                        const col = document.createElement('div');
+                                                        col.className = 'col-6 col-sm-6 col-md-4 category-card';
+
+                                                        const card = document.createElement('div');
+                                                        card.className = 'card text-center';
+                                                        card.style.cursor = 'pointer';
+
+                                                        const cardBody = document.createElement('div');
+                                                        cardBody.className = 'card-body';
+
+                                                        const cardTitle = document.createElement('h5');
+                                                        cardTitle.className = 'card-title';
+                                                        cardTitle.textContent = product.proname || 'No Name';
+
+                                                        const cardText = document.createElement('p');
+                                                        cardText.className = 'card-text';
+                                                        cardText.textContent = product.sellPrice + " Rwf" || 'No price';
+
+                                                        // Hidden elements for niki_code and seller account
+                                                        const nikiCodeInput = document.createElement('input');
+                                                        nikiCodeInput.type = 'hidden';
+                                                        nikiCodeInput.value = product.niki_code;
+
+                                                        const sellerAccountInput = document.createElement('input');
+                                                        sellerAccountInput.type = 'hidden';
+                                                        sellerAccountInput.value = product.seller_account;
+
+                                                        // Adding click event to the card
+                                                        card.addEventListener('click', () => showQuantityPopup(product));
+
+                                                        // Appending elements to card body and card
+                                                        cardBody.appendChild(cardTitle);
+                                                        cardBody.appendChild(cardText);
+                                                        cardBody.appendChild(nikiCodeInput); // Hidden element
+                                                        cardBody.appendChild(sellerAccountInput); // Hidden element
+                                                        card.appendChild(cardBody);
+                                                        col.appendChild(card);
+                                                        row.appendChild(col);
+                                                    });
+
+                                                    productsContainer.appendChild(row);
+                                                } else {
+                                                    productsContainer.innerHTML = '<p>No products found.</p>';
+                                                }
+
+                                                // Show the products container and hide the category container
+                                                document.getElementById('card-container').style.display = 'none';
+                                                productsContainer.style.display = 'block';
+                                            })
+                                            .catch(error => console.error('Error fetching products:', error));
+                                }
+
+//                                function showQuantityPopup(product) {
+//                                    // Debugging output
+//                                    console.log("Product object:", product);
+//                                    console.dir(product); // Detailed inspection
+//
+//                                    // Check if proname is available
+//                                    const productName = product.proname || "Unknown Product";
+//                                    const sellPrice = product.sellPrice !== undefined ? product.sellPrice + ' Rwf' : 'No Price';
+//                                    const nikiCode = product.niki_code !== undefined ? product.niki_code : 'No Code';
+//                                    const sellerAccount = product.seller_account !== undefined ? product.seller_account : 'No Account';
+//
+//                                    console.log("Product name:", productName);
+//                                    console.log("Selling price:", sellPrice);
+//                                    console.log("Niki Code:", nikiCode);
+//                                    console.log("Seller Account:", sellerAccount);
+//
+//                                    // Update modal content with product details
+//                                    document.getElementById("modalTitle").textContent = `Add ${productName} to Cart`;
+//                                    document.getElementById("modalSellPrice").textContent = sellPrice;
+//                                    document.getElementById("modalNikiCode").textContent = nikiCode;
+//                                    document.getElementById("modalSellerAccount").textContent = sellerAccount;
+//
+//                                    // Display the modal
+//                                    var modal = document.getElementById("quantityModal");
+//                                    var span = document.getElementsByClassName("close")[0];
+//
+//                                    modal.style.display = "block";
+//
+//                                    // Close the modal when the user clicks on <span> (x)
+//                                    span.onclick = function () {
+//                                        modal.style.display = "none";
+//                                    }
+//
+//                                    // Close the modal when clicking outside of it
+//                                    window.onclick = function (event) {
+//                                        if (event.target == modal) {
+//                                            modal.style.display = "none";
+//                                        }
+//                                    }
+//
+//                                    // Handle confirm button click
+//                                    document.getElementById("confirmAddToCart").onclick = function () {
+//                                        const quantity = document.getElementById("modalQuantity").value;
+//                                        if (!quantity || quantity <= 0) {
+//                                            alert('Please enter a valid quantity');
+//                                            return;
+//                                        }
+//                                        console.log(`Product: ${productName}, Quantity: ${quantity}`);
+//                                        console.log(`Price: ${sellPrice}, Niki Code: ${nikiCode}, Seller Account: ${sellerAccount}`);
+//                                        // Handle adding to cart or other actions
+//
+//                                        // Close the modal after adding to cart
+//                                        modal.style.display = "none";
+//                                    }
+//                                }
+                                function showQuantityPopup(product) {
+                                    // Debugging output
+                                    console.log("Product object:", product);
+                                    console.dir(product); // Detailed inspection
+
+                                    // Check if proname is available
+                                    const productName = product.proname || "Unknown Product";
+                                    const sellPrice = product.sellPrice !== undefined ? product.sellPrice : 0;
+                                    const nikiCode = product.niki_code !== undefined ? product.niki_code : 'No Code';
+                                    const sellerAccount = product.seller_account !== undefined ? product.seller_account : 'No Account';
+
+                                    console.log("Product name:", productName);
+                                    console.log("Selling price:", sellPrice);
+                                    console.log("Niki Code:", nikiCode);
+                                    console.log("Seller Account:", sellerAccount);
+
+                                    // Update modal content with product details
+                                    document.getElementById("modalTitle").textContent = `Add ${productName} to Cart`;
+                                    document.getElementById("modalSellPrice").textContent = sellPrice + ' Rwf';
+                                    document.getElementById("modalNikiCode").textContent = nikiCode;
+                                    document.getElementById("modalSellerAccount").textContent = sellerAccount;
+
+                                    // Display the modal
+                                    var modal = document.getElementById("quantityModal");
+                                    var span = document.getElementsByClassName("close")[0];
+
+                                    modal.style.display = "block";
+
+                                    // Close the modal when the user clicks on <span> (x)
+                                    span.onclick = function () {
+                                        modal.style.display = "none";
+                                    }
+
+                                    // Close the modal when clicking outside of it
+                                    window.onclick = function (event) {
+                                        if (event.target == modal) {
+                                            modal.style.display = "none";
+                                        }
+                                    }
+
+                                    // Handle confirm button click
+                                    document.getElementById("confirmAddToCart").onclick = function () {
+                                        const quantity = document.getElementById("modalQuantity").value;
+                                        if (!quantity || quantity <= 0) {
+                                            alert('Please enter a valid quantity');
+                                            return;
+                                        }
+
+                                        // Data to send to the servlet
+                                        const data = {
+                                            productName: productName,
+                                            sellPrice: sellPrice,
+                                            nikiCode: nikiCode,
+                                            sellerAccount: sellerAccount,
+                                            quantity: quantity
+                                        };
+
+                                        // AJAX request to send data to the servlet
+                                        fetch('TebukaMenuAddCart', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify(data)
+                                        })
+                                                .then(response => response.json())
+                                                .then(result => {
+                                                    // Handle response from servlet
+                                                    console.log(result);
+                                                    // Close the modal after adding to cart
+                                                    modal.style.display = "none";
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error:', error);
+                                                    alert('An error occurred while adding the product to the cart.');
+                                                });
+                                    }
+                                }
+
+                                function goBack() {
+                                    document.getElementById('products-container').style.display = 'none';
+                                    document.getElementById('card-container').style.display = 'block';
+                                }
+        </script>
+    </body>
+
+</html>
+
