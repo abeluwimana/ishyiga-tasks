@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List with Cart and Favorites</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Reset and base styles */
         * {
@@ -250,7 +251,32 @@
             background-color: #0056b3;
         }
 
-        /* New styles for cart icon */
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: flex;
+        }
+
+        .notification i {
+            font-size: 1.2em;
+        }
+
+        /* Cart Icon styles */
         #cartIconContainer {
             display: flex;
             align-items: center;
@@ -294,165 +320,191 @@
                 grid-template-columns: 1fr;
             }
 
-            .list-container {
-                margin-bottom: 20px;
-            }
-
-            .items-list {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .items-list {
-                grid-template-columns: 1fr;
+            .list-container,
+            .cart-container {
+                height: auto;
             }
         }
     </style>
 </head>
 
 <body>
-    <h1>Product List with Cart and Favorites</h1>
-
-    <div id="cartIconContainer" data-count="0">
-        <span>&#128722;</span>
-    </div>
-
+    <h1>Product List</h1>
     <div class="container">
         <div class="list-container">
-            <h2>Products</h2>
-            <ul id="productList" class="items-list">
-                <!-- Product items will be dynamically added here -->
-            </ul>
+            <h2>Items</h2>
+            <ul id="categoryList" class="category-list"></ul>
+            <ul id="subcategoryList" class="subcategory-list"></ul>
+            <ul id="itemsList" class="items-list"></ul>
         </div>
-
         <div class="cart-container">
-            <h2>Shopping Cart</h2>
-            <ul id="cartItemsList">
-                <!-- Cart items will be dynamically added here -->
-            </ul>
-            <button id="clearCartBtn">Clear Cart</button>
+            <h2>Cart</h2>
+            <ul id="cartList"></ul>
+            <button id="checkoutButton">Checkout</button>
         </div>
+    </div>
+    <div id="cartIconContainer" onclick="toggleCart()">
+        <span><i class="fas fa-shopping-cart"></i></span>
+    </div>
+    <div id="notification" class="notification">
+        <i class="fas fa-bell"></i>
+        <span id="notificationMessage"></span>
     </div>
 
     <script>
-        const productList = document.getElementById('productList');
-        const cartItemsList = document.getElementById('cartItemsList');
-        const clearCartBtn = document.getElementById('clearCartBtn');
-        const cartIconContainer = document.getElementById('cartIconContainer');
-
-        const products = [
-            { id: 1, name: 'Product 1', description: 'Description 1', price: 10.99, image: 'https://via.placeholder.com/150' },
-            { id: 2, name: 'Product 2', description: 'Description 2', price: 19.99, image: 'https://via.placeholder.com/150' },
-            { id: 3, name: 'Product 3', description: 'Description 3', price: 14.99, image: 'https://via.placeholder.com/150' },
-            // Add more products here
+        // Mock data
+        const categories = [
+            { id: 1, name: 'Electronics' },
+            { id: 2, name: 'Books' },
+            { id: 3, name: 'Clothing' }
         ];
 
-        let cartItems = [];
+        const subcategories = [
+            { id: 1, name: 'Laptops' },
+            { id: 2, name: 'Mobile Phones' },
+            { id: 3, name: 'Novels' },
+            { id: 4, name: 'Science Fiction' },
+            { id: 5, name: 'Men\'s Wear' },
+            { id: 6, name: 'Women\'s Wear' }
+        ];
 
-        // Function to add product to the cart
-        function addItemToCart(productId) {
-            const product = products.find(p => p.id === productId);
-            const cartItem = cartItems.find(item => item.id === productId);
+        const items = [
+            { id: 1, name: 'Laptop', price: '$999', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 2, name: 'Smartphone', price: '$699', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 3, name: 'Science Fiction Novel', price: '$15', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 4, name: 'Men\'s Jacket', price: '$120', imageUrl: 'https://via.placeholder.com/200' }
+        ];
 
-            if (cartItem) {
-                cartItem.quantity -= 1;
+        let cart = [];
+
+        const itemsList = document.getElementById('itemsList');
+        const cartList = document.getElementById('cartList');
+        const checkoutButton = document.getElementById('checkoutButton');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const cartIconContainer = document.getElementById('cartIconContainer');
+
+        function populateCategories() {
+            const categoryList = document.getElementById('categoryList');
+            categories.forEach(category => {
+                const li = document.createElement('li');
+                li.textContent = category.name;
+                categoryList.appendChild(li);
+            });
+        }
+
+        function populateSubcategories() {
+            const subcategoryList = document.getElementById('subcategoryList');
+            subcategories.forEach(subcategory => {
+                const li = document.createElement('li');
+                li.textContent = subcategory.name;
+                subcategoryList.appendChild(li);
+            });
+        }
+
+        function populateItems() {
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'product-card';
+                li.innerHTML = `
+                    <img src="${item.imageUrl}" alt="${item.name}">
+                    <div class="product-info">
+                        <h3>${item.name}</h3>
+                        <p>${item.price}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button onclick="addToCart(${item.id})">Add to Cart</button>
+                        <button class="favorite-btn" onclick="addToFavorites(${item.id})">❤️</button>
+                    </div>
+                `;
+                itemsList.appendChild(li);
+            });
+        }
+
+        function showNotification(message) {
+            notificationMessage.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function addToCart(itemId) {
+            const item = items.find(i => i.id === itemId);
+            const existingItem = cart.find(i => i.id === itemId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
             } else {
-                cartItems.push({ ...product, quantity: 1 });
+                cart.push({ ...item, quantity: 1 });
             }
 
             updateCart();
+            showNotification(`${item.name} added to cart!`);
+            updateCartIcon();
         }
 
-        // Function to remove item from the cart
-        function removeItemFromCart(productId) {
-            cartItems = cartItems.filter(item => item.id !== productId);
+        function removeFromCart(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
             updateCart();
+            updateCartIcon();
         }
 
-        // Function to update cart display
         function updateCart() {
-            cartItemsList.innerHTML = '';
-            let totalItems = 0;
-
-            cartItems.forEach(item => {
+            cartList.innerHTML = '';
+            cart.forEach(item => {
                 const li = document.createElement('li');
                 li.innerHTML = `
-                    <img src="${item.image}" alt="${item.name}">
+                    <img src="${item.imageUrl}" alt="${item.name}">
                     <div class="item-info">
                         <strong>${item.name}</strong>
-                        <span>$${item.price.toFixed(2)}</span>
+                        <span>${item.price}</span>
                     </div>
                     <div class="item-controls">
                         <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">-</button>
                         <span>${item.quantity}</span>
                         <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
-                        <button onclick="removeItemFromCart(${item.id})">Remove</button>
+                        <button onclick="removeFromCart(${item.id})">Remove</button>
                     </div>
                 `;
-                cartItemsList.appendChild(li);
-                totalItems += item.quantity;
+                cartList.appendChild(li);
             });
-
-            cartIconContainer.setAttribute('data-count', totalItems);
         }
 
-        // Increase quantity of cart item
-        function increaseQuantity(productId) {
-            const cartItem = cartItems.find(item => item.id === productId);
-            if (cartItem) {
-                cartItem.quantity += 1;
+        function increaseQuantity(itemId) {
+            const item = cart.find(i => i.id === itemId);
+            if (item) {
+                item.quantity += 1;
                 updateCart();
             }
         }
 
-        // Decrease quantity of cart item
-        function decreaseQuantity(productId) {
-            const cartItem = cartItems.find(item => item.id === productId);
-            if (cartItem && cartItem.quantity > 1) {
-                cartItem.quantity -= 1;
+        function decreaseQuantity(itemId) {
+            const item = cart.find(i => i.id === itemId);
+            if (item && item.quantity > 1) {
+                item.quantity -= 1;
                 updateCart();
-            } else if (cartItem) {
-                removeItemFromCart(productId);
+            } else if (item) {
+                removeFromCart(itemId);
             }
         }
 
-        // Function to clear the cart
-        clearCartBtn.addEventListener('click', () => {
-            cartItems = [];
-            updateCart();
-        });
-
-        // Load products into the product list
-        function loadProducts() {
-            products.forEach(product => {
-                const li = document.createElement('li');
-                li.className = 'product-card';
-                li.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <div class="product-info">
-                        <h3>${product.name}</h3>
-                        <p>${product.description}</p>
-                        <p>$${product.price.toFixed(2)}</p>
-                    </div>
-                    <div class="product-actions">
-                        <button onclick="addItemToCart(${product.id})">Add to Cart</button>
-                        <button class="favorite-btn" onclick="addToFavorites(${product.id})">❤️</button>
-                    </div>
-                `;
-                productList.appendChild(li);
-            });
+        function addToFavorites(itemId) {
+            alert(`Added to favorites: Item ${itemId}`);
         }
 
-        // Example function to handle adding to favorites
-        function addToFavorites(productId) {
-            alert('Added to favorites: Product ' + productId);
+        function toggleCart() {
+            const isCartVisible = cartList.parentElement.style.display !== 'none';
+            cartList.parentElement.style.display = isCartVisible ? 'none' : 'block';
         }
 
-        // Initialize the app
-        loadProducts();
-        updateCart();
+        function updateCartIcon() {
+            cartIconContainer.setAttribute('data-count', cart.length);
+        }
 
+        populateCategories();
+        populateSubcategories();
+        populateItems();
     </script>
 </body>
 

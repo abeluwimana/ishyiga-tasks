@@ -34,6 +34,7 @@
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 20px;
+            margin-top: 60px; /* Add space for the cart icon */
         }
 
         .list-container,
@@ -276,6 +277,42 @@
             font-size: 1.2em;
         }
 
+        /* Cart icon styles */
+        .cart-icon {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 60px; /* Make width and height equal */
+    height: 60px; /* Make width and height equal */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #007BFF;
+    color: white;
+    border-radius: 50%; /* This makes the element circular */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.cart-icon span {
+    font-size: 1.1em; /* Adjust the icon size */
+}
+
+.cart-badge {
+    background-color: #FF4136;
+    border-radius: 50%;
+    padding: 1px 4px;
+    font-size: 0.8em; /* Adjust the badge size */
+    color: white;
+    font-weight: bold;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+}
+
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -287,6 +324,12 @@
 
             .items-list {
                 grid-template-columns: 1fr 1fr;
+            }
+
+            .cart-icon {
+                top: auto;
+                bottom: 20px;
+                right: 20px; /* Adjusted for mobile view */
             }
         }
 
@@ -300,6 +343,10 @@
 
 <body>
     <h1>Product List with Cart and Favorites</h1>
+    <div class="cart-icon" onclick="showCart()">
+        <span><i class="fas fa-shopping-cart"></i></span>
+        <span id="cartBadge" class="cart-badge">0</span>
+    </div>
     <div class="container">
         <div class="list-container">
             <div>
@@ -323,52 +370,69 @@
     </div>
     <div id="notification" class="notification">
         <i class="fas fa-bell"></i>
-        <span id="notificationMessage"></span>
+        <span id="notificationText"></span>
     </div>
 
     <script>
         const categories = [
             { id: 1, name: 'Electronics' },
-            { id: 2, name: 'Furniture' },
+            { id: 2, name: 'Books' },
             { id: 3, name: 'Clothing' }
         ];
 
-        const subcategories = [
-            { id: 1, name: 'Mobile Phones', categoryId: 1 },
-            { id: 2, name: 'Laptops', categoryId: 1 },
-            { id: 3, name: 'TVs', categoryId: 1 },
-            { id: 4, name: 'Sofas', categoryId: 2 },
-            { id: 5, name: 'Beds', categoryId: 2 },
-            { id: 6, name: 'Chairs', categoryId: 2 },
-            { id: 7, name: 'Men\'s Clothing', categoryId: 3 },
-            { id: 8, name: 'Women\'s Clothing', categoryId: 3 },
-            { id: 9, name: 'Children\'s Clothing', categoryId: 3 }
-        ];
+        const subcategories = {
+            1: [
+                { id: 101, name: 'Phones' },
+                { id: 102, name: 'Laptops' }
+            ],
+            2: [
+                { id: 201, name: 'Fiction' },
+                { id: 202, name: 'Non-Fiction' }
+            ],
+            3: [
+                { id: 301, name: 'Men' },
+                { id: 302, name: 'Women' }
+            ]
+        };
 
         const items = [
-            { id: 1, name: 'iPhone 12', price: '$799', subcategoryId: 1, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 2, name: 'Samsung Galaxy S21', price: '$999', subcategoryId: 1, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 3, name: 'MacBook Pro', price: '$1299', subcategoryId: 2, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 4, name: 'Dell XPS 13', price: '$1199', subcategoryId: 2, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 5, name: 'Sony Bravia 55"', price: '$699', subcategoryId: 3, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 6, name: 'LG OLED 65"', price: '$1499', subcategoryId: 3, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 7, name: 'Leather Sofa', price: '$899', subcategoryId: 4, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 8, name: 'Queen Bed', price: '$499', subcategoryId: 5, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 9, name: 'Gaming Chair', price: '$199', subcategoryId: 6, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 10, name: 'Men\'s T-Shirt', price: '$29', subcategoryId: 7, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 11, name: 'Women\'s Dress', price: '$49', subcategoryId: 8, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' },
-            { id: 12, name: 'Children\'s Jacket', price: '$39', subcategoryId: 9, imageUrl: 'https://cdn.pixabay.com/photo/2024/05/24/19/06/bird-8785666_640.jpg' }
+            { id: 1, name: 'iPhone', category: 1, subcategory: 101, price: '$999', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 2, name: 'MacBook Pro', category: 1, subcategory: 102, price: '$1999', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 3, name: 'Harry Potter', category: 2, subcategory: 201, price: '$19', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 4, name: 'The Alchemist', category: 2, subcategory: 202, price: '$15', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 5, name: 'T-Shirt', category: 3, subcategory: 301, price: '$9', imageUrl: 'https://via.placeholder.com/200' },
+            { id: 6, name: 'Jeans', category: 3, subcategory: 302, price: '$49', imageUrl: 'https://via.placeholder.com/200' }
         ];
 
         let cart = [];
+        let favorites = [];
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            notificationText.textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateCartBadge() {
+            const cartBadge = document.getElementById('cartBadge');
+            cartBadge.textContent = cart.reduce((acc, item) => acc + item.quantity, 0);
+        }
 
         function populateList(elementId, data, clickHandler) {
             const listElement = document.getElementById(elementId);
             listElement.innerHTML = '';
+
             data.forEach(item => {
                 const listItem = document.createElement('li');
+
                 if (elementId === 'categoryList' || elementId === 'subcategoryList') {
                     listItem.textContent = item.name;
+                    listItem.onclick = () => clickHandler(item.id);
                 } else {
                     listItem.innerHTML = `
                         <div class="product-card">
@@ -384,112 +448,116 @@
                         </div>
                     `;
                 }
-                listItem.onclick = () => clickHandler(item.id);
+
                 listElement.appendChild(listItem);
             });
-        }
-
-        function filterItemsByCategory(categoryId) {
-            const filteredSubcategories = subcategories.filter(sub => sub.categoryId === categoryId);
-            const filteredItems = items.filter(item => filteredSubcategories.find(sub => sub.id === item.subcategoryId));
-            populateList('subcategoryList', filteredSubcategories, onSubcategoryClick);
-            populateList('itemsList', filteredItems, addItemToCart);
-        }
-
-        function filterItemsBySubcategory(subcategoryId) {
-            const filteredItems = items.filter(item => item.subcategoryId === subcategoryId);
-            populateList('itemsList', filteredItems, addItemToCart);
-        }
-
-        function onCategoryClick(categoryId) {
-            filterItemsByCategory(categoryId);
-        }
-
-        function onSubcategoryClick(subcategoryId) {
-            filterItemsBySubcategory(subcategoryId);
         }
 
         function addItemToCart(itemId) {
             const item = items.find(i => i.id === itemId);
             const cartItem = cart.find(cartItem => cartItem.id === itemId);
+
             if (cartItem) {
+                // If item is already in the cart, increase its quantity
                 cartItem.quantity++;
             } else {
+                // If item is not in the cart, add it with quantity 1
                 cart.push({ ...item, quantity: 1 });
             }
+
             showNotification('Item added to cart!');
-            populateCart();
-        }
-
-        function removeItemFromCart(itemId) {
-            cart = cart.filter(item => item.id !== itemId);
-            populateCart();
-        }
-
-        function increaseQuantity(itemId) {
-            const cartItem = cart.find(item => item.id === itemId);
-            if (cartItem) {
-                cartItem.quantity++;
-                populateCart();
-            }
-        }
-
-        function decreaseQuantity(itemId) {
-            const cartItem = cart.find(item => item.id === itemId);
-            if (cartItem && cartItem.quantity > 1) {
-                cartItem.quantity--;
-            } else {
-                removeItemFromCart(itemId);
-            }
+            updateCartBadge();
             populateCart();
         }
 
         function addToFavorites(itemId) {
-            showNotification('Item added to favorites!');
+            if (!favorites.includes(itemId)) {
+                favorites.push(itemId);
+                showNotification('Item added to favorites!');
+            } else {
+                showNotification('Item is already in favorites!');
+            }
         }
 
         function populateCart() {
             const cartList = document.getElementById('cartList');
             cartList.innerHTML = '';
 
-            cart.forEach(item => {
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <img src="${item.imageUrl}" alt="${item.name}">
+            cart.forEach(cartItem => {
+                const cartListItem = document.createElement('li');
+                cartListItem.innerHTML = `
+                    <img src="${cartItem.imageUrl}" alt="${cartItem.name}">
                     <div class="item-info">
-                        <strong>${item.name}</strong>
-                        <p>${item.price}</p>
+                        <h3>${cartItem.name}</h3>
+                        <p>${cartItem.price}</p>
                     </div>
                     <div class="item-controls">
-                        <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">-</button>
-                        <span>${item.quantity}</span>
-                        <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
-                        <button onclick="removeItemFromCart(${item.id})">Remove</button>
+                        <button class="quantity-btn" onclick="decreaseQuantity(${cartItem.id})">-</button>
+                        <span>${cartItem.quantity}</span>
+                        <button class="quantity-btn" onclick="increaseQuantity(${cartItem.id})">+</button>
+                        <button onclick="removeFromCart(${cartItem.id})">Remove</button>
                     </div>
                 `;
-                cartList.appendChild(listItem);
+                cartList.appendChild(cartListItem);
             });
         }
 
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            const notificationMessage = document.getElementById('notificationMessage');
-            notificationMessage.textContent = message;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+        function increaseQuantity(itemId) {
+            const cartItem = cart.find(cartItem => cartItem.id === itemId);
+            if (cartItem) {
+                cartItem.quantity++;
+                updateCartBadge();
+                populateCart();
+            }
+        }
+
+        function decreaseQuantity(itemId) {
+            const cartItem = cart.find(cartItem => cartItem.id === itemId);
+            if (cartItem && cartItem.quantity > 1) {
+                cartItem.quantity--;
+                updateCartBadge();
+                populateCart();
+            }
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(cartItem => cartItem.id !== itemId);
+            updateCartBadge();
+            populateCart();
+        }
+
+        function handleCategoryClick(categoryId) {
+            populateList('subcategoryList', subcategories[categoryId], handleSubcategoryClick);
+            document.querySelectorAll('#categoryList li').forEach(li => li.classList.remove('selected'));
+            document.querySelector(`#categoryList li:nth-child(${categories.findIndex(c => c.id === categoryId) + 1})`).classList.add('selected');
+        }
+
+        function handleSubcategoryClick(subcategoryId) {
+            const filteredItems = items.filter(item => item.subcategory === subcategoryId);
+            populateList('itemsList', filteredItems);
         }
 
         function init() {
-            populateList('categoryList', categories, onCategoryClick);
-            populateList('subcategoryList', subcategories, onSubcategoryClick);
-            populateList('itemsList', items, addItemToCart);
+            populateList('categoryList', categories, handleCategoryClick);
+            populateList('itemsList', items);
+            updateCartBadge(); // Initialize the cart badge
         }
 
-        init();
+        function showCart() {
+            document.querySelector('.cart-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('checkoutButton').addEventListener('click', () => {
+            if (cart.length === 0) {
+                showNotification('Cart is empty!');
+            } else {
+                showNotification('Proceeding to checkout...');
+                // Proceed to checkout logic here
+            }
+        });
+
+        window.onload = init;
     </script>
-    <!-- Font Awesome for notification icon -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" integrity="sha512-4pkiLXovLM8Wz4uk3gB6T0/Wz+6dHX5sFQggC1D5wS9xC2Z+IljLjB5SlRk8iJ8vI4TT6W6bXKgyjD0bU6ugA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
+
 </html>
